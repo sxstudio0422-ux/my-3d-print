@@ -3,169 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SX Studio | 專業 3D 智能估價系統</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/STLLoader.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/controls/OrbitControls.js"></script>
+    <title>SX Studio | 專業 3D 智能估價</title>
+    <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <style>
-        :root { --primary: #00d2ff; --accent: #3a7bd5; --success: #4ade80; --warning: #fbbf24; --danger: #f87171; --bg: #0b0f1a; --card: rgba(30, 41, 59, 0.7); }
-        body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background: var(--bg); color: #e2e8f0; margin: 0; display: flex; flex-direction: column; min-height: 100vh; }
-        nav { background: rgba(15, 23, 42, 0.9); padding: 15px 50px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
-        .logo { font-size: 24px; font-weight: 800; background: linear-gradient(45deg, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .container { display: grid; grid-template-columns: 1fr 400px; gap: 30px; padding: 40px; max-width: 1400px; margin: 0 auto; width: 90%; }
-        @media (max-width: 1000px) { .container { grid-template-columns: 1fr; padding: 20px; } }
-        .preview-section { background: var(--card); border-radius: 24px; border: 1px solid rgba(255,255,255,0.1); position: relative; overflow: hidden; height: 600px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
-        #canvas-container { width: 100%; height: 100%; cursor: grab; }
-        #drop-hint { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #64748b; pointer-events: none; }
-        .upload-btn { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--primary); color: #0b0f1a; padding: 12px 30px; border-radius: 50px; font-weight: bold; cursor: pointer; box-shadow: 0 5px 20px rgba(0, 210, 255, 0.4); border: none; }
-        .control-panel { background: var(--card); padding: 30px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(20px); }
-        h2 { margin-top: 0; font-size: 20px; border-left: 4px solid var(--primary); padding-left: 15px; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-size: 14px; color: #94a3b8; }
-        select { width: 100%; background: #0f172a; border: 1px solid #334155; color: white; padding: 12px; border-radius: 12px; outline: none; transition: 0.3s; }
-        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 25px 0; }
-        .info-card { background: rgba(15, 23, 42, 0.5); padding: 15px; border-radius: 15px; border: 1px solid #1e293b; }
-        .info-label { font-size: 12px; color: #64748b; display: block; margin-bottom: 5px; }
-        .info-value { font-size: 16px; font-weight: bold; color: var(--primary); }
-        .price-section { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #334155; }
-        .price-amount { font-size: 48px; font-weight: 800; color: var(--success); margin: 10px 0; }
-        .btn-submit { width: 100%; padding: 18px; background: linear-gradient(45deg, var(--primary), var(--accent)); color: white; border: none; border-radius: 15px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 20px; }
+        :root { --primary: #00d2ff; --accent: #3a7bd5; --success: #4ade80; --bg: #0b0f1a; --card: rgba(30, 41, 59, 0.8); }
+        body { font-family: sans-serif; background: var(--bg); color: #e2e8f0; margin: 0; }
+        nav { background: #0f172a; padding: 15px 50px; border-bottom: 1px solid #1e293b; text-align: center; }
+        .logo { font-size: 24px; font-weight: bold; color: var(--primary); }
+        .container { display: grid; grid-template-columns: 1fr 380px; gap: 20px; padding: 20px; max-width: 1200px; margin: 0 auto; }
+        @media (max-width: 900px) { .container { grid-template-columns: 1fr; } }
+        .preview-section { background: #000; border-radius: 20px; height: 500px; position: relative; border: 1px solid #334155; }
+        #canvas-container { width: 100%; height: 100%; }
+        .upload-btn { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--primary); border: none; padding: 10px 25px; border-radius: 50px; font-weight: bold; cursor: pointer; }
+        .control-panel { background: var(--card); padding: 25px; border-radius: 20px; border: 1px solid #334155; }
+        .form-group { margin-bottom: 15px; }
+        select { width: 100%; padding: 10px; background: #1e293b; color: white; border-radius: 10px; border: 1px solid #334155; }
+        .info-card { background: #0f172a; padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #1e293b; }
+        .price-amount { font-size: 40px; color: var(--success); text-align: center; margin: 20px 0; font-weight: bold; }
+        .btn-submit { width: 100%; padding: 15px; background: linear-gradient(45deg, var(--primary), var(--accent)); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<nav>
-    <div class="logo">SX STUDIO 3D</div>
-    <div style="font-size: 14px; color: #64748b;">X2D + AMS 智能報價系統</div>
-</nav>
+<nav><div class="logo">SX STUDIO 3D</div></nav>
 
 <div class="container">
     <div class="preview-section">
         <div id="canvas-container"></div>
-        <div id="drop-hint">
-            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-            <p>請上傳您的 STL 圖檔</p>
-        </div>
-        <button class="upload-btn" onclick="document.getElementById('fileInput').click()">選擇檔案</button>
+        <button class="upload-btn" onclick="document.getElementById('fileInput').click()">選擇 STL 檔案</button>
         <input type="file" id="fileInput" hidden accept=".stl">
     </div>
 
     <div class="control-panel">
-        <h2>列印參數設定</h2>
-        <div class="form-group" style="margin-top: 25px;">
-            <label>填充密度 (Infill)</label>
+        <div class="form-group">
+            <label>填充密度</label>
             <select id="infill" onchange="calculate()">
-                <option value="0.1">10% (輕量/展示)</option>
-                <option value="0.2" selected>20% (結構標準)</option>
-                <option value="0.5">50% (高強度)</option>
-                <option value="1.0">100% (實心)</option>
+                <option value="0.2">20% 標準</option>
+                <option value="0.5">50% 加強</option>
+                <option value="1.0">100% 實心</option>
             </select>
         </div>
         <div class="form-group">
-            <label>列印模式 (X2D 專屬)</label>
-            <select id="nozzle-mode" onchange="calculate()">
-                <option value="1.0" selected>單色模式 (主噴頭)</option>
-                <option value="1.8">AMS 多色模式 (主噴頭)</option>
-                <option value="2.2">異材質支撐 (雙噴頭模式)</option>
+            <label>模式 (X2D + AMS)</label>
+            <select id="mode" onchange="calculate()">
+                <option value="1.0">單色模式</option>
+                <option value="1.8">AMS 多色模式</option>
+                <option value="2.2">異材質支撐 (雙噴頭)</option>
             </select>
         </div>
-
-        <div class="info-grid">
-            <div class="info-card" style="grid-column: span 2;">
-                <span class="info-label">模型尺寸 (L x W x H)</span>
-                <span class="info-value" id="size-out">-- x -- x -- mm</span>
-            </div>
-            <div class="info-card">
-                <span class="info-label">預估重量</span>
-                <span class="info-value" id="weight-out">0</span> <small>g</small>
-            </div>
-            <div class="info-card">
-                <span class="info-label">機台判定</span>
-                <span class="info-value" id="diff-out" style="font-size: 13px;">等待檔案</span>
-            </div>
+        <div class="info-card">
+            <div id="size-out">尺寸: -- mm</div>
+            <div id="weight-out">重量: 0 g</div>
+            <div id="status-out" style="margin-top:5px; font-weight:bold;">等待檔案...</div>
         </div>
-
-        <div class="price-section">
-            <span style="color: #94a3b8;">預估費用</span>
-            <div class="price-amount"><small style="font-size: 20px;">NT$</small> <span id="price-out">0</span></div>
-            <button class="btn-submit" onclick="window.open('https://line.me/ti/p/1789987')">立即下單 / 諮詢店長</button>
-        </div>
+        <div class="price-amount">NT$ <span id="price-out">0</span></div>
+        <button class="btn-submit" onclick="window.open('https://line.me/ti/p/1789987')">LINE 下單諮詢</button>
     </div>
 </div>
 
 <script>
-    let scene, camera, renderer, mesh, controls, currentVol = 0;
-    let dimensions = { x: 0, y: 0, z: 0 };
+    let scene, camera, renderer, mesh, controls, currentVol = 0, dims = {x:0,y:0,z:0};
 
-    function initThree() {
-        scene = new THREE.Scene();
+    function init() {
         const container = document.getElementById('canvas-container');
-        camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 2000);
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 5000);
         renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(container.clientWidth, container.clientHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
         container.appendChild(renderer.domElement);
-        scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-        const light = new THREE.SpotLight(0xffffff, 0.8);
-        light.position.set(200, 400, 300);
+        
+        scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+        let light = new THREE.DirectionalLight(0xffffff, 0.5);
+        light.position.set(1, 1, 1);
         scene.add(light);
+        
         controls = new THREE.OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
         animate();
     }
 
     function animate() {
         requestAnimationFrame(animate);
-        controls.update();
-        if(mesh) mesh.rotation.y += 0.002;
+        if(mesh) mesh.rotation.y += 0.005;
         renderer.render(scene, camera);
     }
 
-    document.getElementById('fileInput').onchange = (e) => {
+    document.getElementById('fileInput').onchange = function(e) {
         const file = e.target.files[0];
         if(!file) return;
         const reader = new FileReader();
-        document.getElementById('drop-hint').innerHTML = "<p>正在解析 3D 模型...</p>";
-        reader.onload = (event) => {
+        reader.onload = function(event) {
             const loader = new THREE.STLLoader();
             const geometry = loader.parse(event.target.result);
             if(mesh) scene.remove(mesh);
-            mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: 0x00d2ff, metalness: 0.5, roughness: 0.2 }));
+            mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({color: 0x00d2ff}));
             geometry.computeBoundingBox();
-            const bbox = geometry.boundingBox;
-            dimensions = { x: (bbox.max.x-bbox.min.x).toFixed(1), y: (bbox.max.y-bbox.min.y).toFixed(1), z: (bbox.max.z-bbox.min.z).toFixed(1) };
+            const b = geometry.boundingBox;
+            dims = { x: (b.max.x-b.min.x).toFixed(1), y: (b.max.y-b.min.y).toFixed(1), z: (b.max.z-b.min.z).toFixed(1) };
             geometry.computeBoundingSphere();
-            const center = geometry.boundingSphere.center;
-            mesh.position.set(-center.x, -center.y, -center.z);
+            mesh.position.set(-geometry.boundingSphere.center.x, -geometry.boundingSphere.center.y, -geometry.boundingSphere.center.z);
             scene.add(mesh);
-            camera.position.set(0, geometry.boundingSphere.radius, geometry.boundingSphere.radius * 2.5);
-            document.getElementById('drop-hint').style.display = 'none';
-            currentVol = getVolume(geometry) / 1000;
+            camera.position.z = geometry.boundingSphere.radius * 2.5;
+            currentVol = getVol(geometry);
             calculate();
         };
         reader.readAsArrayBuffer(file);
     };
 
-    function getVolume(geometry) {
-        let vol = 0;
-        const pos = geometry.attributes.position;
-        for(let i=0; i<pos.count; i+=3) {
-            const v1 = new THREE.Vector3(pos.getX(i), pos.getY(i), pos.getZ(i));
-            const v2 = new THREE.Vector3(pos.getX(i+1), pos.getY(i+1), pos.getZ(i+1));
-            const v3 = new THREE.Vector3(pos.getX(i+2), pos.getY(i+2), pos.getZ(i+2));
-            vol += v1.dot(v2.cross(v3)) / 6;
+    function getVol(g) {
+        let v = 0;
+        const p = g.attributes.position;
+        for(let i=0; i<p.count; i+=3) {
+            const v1 = new THREE.Vector3(p.getX(i), p.getY(i), p.getZ(i));
+            const v2 = new THREE.Vector3(p.getX(i+1), p.getY(i+1), p.getZ(i+1));
+            const v3 = new THREE.Vector3(p.getX(i+2), p.getY(i+2), p.getZ(i+2));
+            v += v1.dot(v2.cross(v3)) / 6;
         }
-        return Math.abs(vol);
+        return Math.abs(v) / 1000;
     }
 
     function calculate() {
-        if(currentVol === 0) return;
+        if(!currentVol) return;
         const infill = parseFloat(document.getElementById('infill').value);
-        const modeSelect = document.getElementById('nozzle-mode');
-        let factor = parseFloat(modeSelect.value);
-        const modeName = modeSelect.options[modeSelect.selectedIndex].text;
+        const mode = parseFloat(document.getElementById('mode').value);
+        let weight = currentVol * 1.25 * (infill + 0.15);
+        let extra = 0, status = "一體成型", sColor = "#4ade80";
+
+        if(dims.x > 256 || dims.y > 256 || dims.z > 260) { extra = 250; status = "需拆件印製"; sColor = "#f87171"; }
         
-        let splitFee = 0, diff = "一體成型", color = "#4ade80";
-        if (dimensions.x > 256 || dimensions.y > 256 || dimensions.z > 260) {
-            splitFee = 250; diff = "需拆件印製"; color = "#f87171";
-        } else if (modeName.includes("異材質") &&
+        let price = Math.ceil((weight * 2.5 * mode) + 35 + extra);
+        document.getElementById('price-out').innerText = price < 60 ? 60 : price;
+        document.getElementById('weight-out').innerText = "重量: " + weight.toFixed(1) + " g";
+        document.getElementById('size-out').innerText = "尺寸: " + dims.x + "x" + dims.y + "x" + dims.z + " mm";
+        const st = document.getElementById('status-out');
+        st.innerText = status; st.style.color = sColor;
+    }
+
+    init();
+</script>
+</body>
+</html>
