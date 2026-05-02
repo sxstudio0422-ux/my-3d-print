@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI 3D 列印自動估價系統</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/STLLoader.js"></script>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #f4f4f4; }
+        #drop-zone { border: 2px dashed #bbb; padding: 40px; width: 300px; margin: 20px auto; background: #fff; cursor: pointer; }
+        #viewer { width: 400px; height: 300px; margin: 0 auto; background: #eee; border: 1px solid #ccc; }
+        .result { font-size: 1.2em; color: #333; margin-top: 20px; }
+        button { padding: 10px 20px; background: #28a745; color: white; border: none; cursor: pointer; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <h1>3D 列印即時報價</h1>
+    <div id="drop-zone">點擊或拖拽 STL 檔案至此</div>
+    <div id="viewer"></div>
+    
+    <div class="result">
+        <p>預估體積: <span id="volume">0</span> cm³</p>
+        <p>預估價格: <span id="price">0</span> TWD</p>
+    </div>
+
+    <button onclick="contactOwner()">對報價有疑慮？聯絡我</button>
+    <button onclick="submitOrder()" style="background: #007bff;">確認代印（發送檔案）</button>
+
+    <script>
+        let currentVolume = 0;
+        const loader = new THREE.STLLoader();
+        const pricePerCm3 = 15; // 假設每立方公分 15 元，你可以自己改
+
+        document.getElementById('drop-zone').onclick = () => {
+            let input = document.createElement('input');
+            input.type = 'file';
+            input.onchange = e => { handleFile(e.target.files[0]); };
+            input.click();
+        };
+
+        function handleFile(file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const contents = e.target.result;
+                const geometry = loader.parse(contents);
+                
+                // 計算體積 (簡易版公式)
+                currentVolume = calculateVolume(geometry) / 1000; // 換算成 cm³
+                const price = Math.ceil(currentVolume * pricePerCm3 + 50); // +50 是基本費
+                
+                document.getElementById('volume').innerText = currentVolume.toFixed(2);
+                document.getElementById('price').innerText = price;
+                
+                // 渲染 3D 預覽 (此處省略複雜渲染代碼，僅供邏輯示範)
+                alert("檔案解析成功！預估價格為: " + price + " 元");
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function calculateVolume(geometry) {
+            let volume = 0;
+            const position = geometry.attributes.position;
+            const faces = position.count / 3;
+            for (let i = 0; i < faces; i++) {
+                const v1 = new THREE.Vector3().fromBufferAttribute(position, i * 3 + 0);
+                const v2 = new THREE.Vector3().fromBufferAttribute(position, i * 3 + 1);
+                const v3 = new THREE.Vector3().fromBufferAttribute(position, i * 3 + 2);
+                volume += (v1.x * v2.y * v3.z + v1.y * v2.z * v3.x + v1.z * v2.x * v3.y - v1.x * v2.z * v3.y - v1.y * v2.x * v3.z - v1.z * v2.y * v3.x) / 6;
+            }
+            return Math.abs(volume);
+        }
+
+        function contactOwner() {
+            window.open("https://line.me/ti/p/你的ID", "_blank");
+        }
+
+        function submitOrder() {
+            alert("功能開發中：這將會把檔案上傳至你的雲端並通知你！");
+        }
+    </script>
+</body>
+</html>
