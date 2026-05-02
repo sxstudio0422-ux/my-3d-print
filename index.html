@@ -9,20 +9,23 @@
     <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <style>
         :root { --primary: #00d2ff; --accent: #3a7bd5; --success: #4ade80; --bg: #0b0f1a; --card: rgba(30, 41, 59, 0.8); }
-        body { font-family: sans-serif; background: var(--bg); color: #e2e8f0; margin: 0; }
-        nav { background: #0f172a; padding: 15px 50px; border-bottom: 1px solid #1e293b; text-align: center; }
-        .logo { font-size: 24px; font-weight: bold; color: var(--primary); }
-        .container { display: grid; grid-template-columns: 1fr 380px; gap: 20px; padding: 20px; max-width: 1200px; margin: 0 auto; }
+        body { font-family: 'PingFang TC', sans-serif; background: var(--bg); color: #e2e8f0; margin: 0; }
+        nav { background: #0f172a; padding: 15px; border-bottom: 2px solid var(--primary); text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+        .logo { font-size: 26px; font-weight: bold; color: var(--primary); letter-spacing: 2px; }
+        .container { display: grid; grid-template-columns: 1fr 380px; gap: 20px; padding: 20px; max-width: 1300px; margin: 0 auto; }
         @media (max-width: 900px) { .container { grid-template-columns: 1fr; } }
-        .preview-section { background: #000; border-radius: 20px; height: 500px; position: relative; border: 1px solid #334155; }
+        .preview-section { background: radial-gradient(circle, #1e293b 0%, #000 100%); border-radius: 20px; height: 550px; position: relative; border: 1px solid #334155; box-shadow: inset 0 0 50px rgba(0,0,0,1); }
         #canvas-container { width: 100%; height: 100%; }
-        .upload-btn { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--primary); border: none; padding: 10px 25px; border-radius: 50px; font-weight: bold; cursor: pointer; }
-        .control-panel { background: var(--card); padding: 25px; border-radius: 20px; border: 1px solid #334155; }
-        .form-group { margin-bottom: 15px; }
-        select { width: 100%; padding: 10px; background: #1e293b; color: white; border-radius: 10px; border: 1px solid #334155; }
-        .info-card { background: #0f172a; padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #1e293b; }
-        .price-amount { font-size: 40px; color: var(--success); text-align: center; margin: 20px 0; font-weight: bold; }
-        .btn-submit { width: 100%; padding: 15px; background: linear-gradient(45deg, var(--primary), var(--accent)); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .upload-btn { position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); background: var(--primary); border: none; padding: 12px 30px; border-radius: 50px; font-weight: bold; cursor: pointer; transition: 0.3s; box-shadow: 0 0 15px rgba(0,210,255,0.5); }
+        .upload-btn:hover { background: #fff; transform: translateX(-50%) scale(1.05); }
+        .control-panel { background: var(--card); padding: 25px; border-radius: 20px; border: 1px solid #334155; backdrop-filter: blur(10px); }
+        .form-group { margin-bottom: 20px; }
+        label { font-size: 14px; color: #94a3b8; display: block; margin-bottom: 8px; }
+        select { width: 100%; padding: 12px; background: #0f172a; color: white; border-radius: 10px; border: 1px solid #334155; outline: none; }
+        .info-card { background: rgba(15, 23, 42, 0.9); padding: 18px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #1e293b; line-height: 1.8; }
+        .price-amount { font-size: 44px; color: var(--success); text-align: center; margin: 20px 0; font-weight: 800; text-shadow: 0 0 20px rgba(74, 222, 128, 0.3); }
+        .btn-submit { width: 100%; padding: 18px; background: linear-gradient(45deg, #00d2ff, #3a7bd5); color: white; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-submit:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(58, 123, 213, 0.4); }
     </style>
 </head>
 <body>
@@ -32,34 +35,34 @@
 <div class="container">
     <div class="preview-section">
         <div id="canvas-container"></div>
-        <button class="upload-btn" onclick="document.getElementById('fileInput').click()">選擇 STL 檔案</button>
+        <button class="upload-btn" onclick="document.getElementById('fileInput').click()">＋ 載入 3D 模型 (.STL)</button>
         <input type="file" id="fileInput" hidden accept=".stl">
     </div>
 
     <div class="control-panel">
         <div class="form-group">
-            <label>填充密度</label>
+            <label>填充密度 (Infill)</label>
             <select id="infill" onchange="calculate()">
-                <option value="0.2">20% 標準</option>
-                <option value="0.5">50% 加強</option>
-                <option value="1.0">100% 實心</option>
+                <option value="0.2" selected>20% 標準強度</option>
+                <option value="0.5">50% 結構加強</option>
+                <option value="1.0">100% 全實心</option>
             </select>
         </div>
         <div class="form-group">
-            <label>模式 (X2D + AMS)</label>
+            <label>列印模式 (X2D + AMS)</label>
             <select id="mode" onchange="calculate()">
                 <option value="1.0">單色模式</option>
-                <option value="1.8">AMS 多色模式</option>
-                <option value="2.2">異材質支撐 (雙噴頭)</option>
+                <option value="1.8">AMS 多色模式 (主噴頭)</option>
+                <option value="2.2">異材質支撐 (輔助噴頭)</option>
             </select>
         </div>
         <div class="info-card">
-            <div id="size-out">尺寸: -- mm</div>
-            <div id="weight-out">重量: 0 g</div>
-            <div id="status-out" style="margin-top:5px; font-weight:bold;">等待檔案...</div>
+            <div id="size-out" style="color: #94a3b8;">尺寸: -- mm</div>
+            <div id="weight-out" style="color: #94a3b8;">預估重量: 0 g</div>
+            <div id="status-out" style="margin-top:10px; font-size: 18px; font-weight:bold;">等待檔案...</div>
         </div>
         <div class="price-amount">NT$ <span id="price-out">0</span></div>
-        <button class="btn-submit" onclick="window.open('https://line.me/ti/p/1789987')">LINE 下單諮詢</button>
+        <button class="btn-submit" onclick="window.open('https://line.me/R/ti/p/~1789987')">確認報價 / 聯繫店長</button>
     </div>
 </div>
 
@@ -72,20 +75,23 @@
         camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 5000);
         renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
         container.appendChild(renderer.domElement);
         
-        scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-        let light = new THREE.DirectionalLight(0xffffff, 0.5);
-        light.position.set(1, 1, 1);
+        scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+        let light = new THREE.DirectionalLight(0xffffff, 0.6);
+        light.position.set(10, 10, 10);
         scene.add(light);
         
         controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
         animate();
     }
 
     function animate() {
         requestAnimationFrame(animate);
-        if(mesh) mesh.rotation.y += 0.005;
+        controls.update();
+        if(mesh) mesh.rotation.y += 0.003;
         renderer.render(scene, camera);
     }
 
@@ -97,14 +103,14 @@
             const loader = new THREE.STLLoader();
             const geometry = loader.parse(event.target.result);
             if(mesh) scene.remove(mesh);
-            mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({color: 0x00d2ff}));
+            mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({color: 0x00d2ff, metalness: 0.4, roughness: 0.3}));
             geometry.computeBoundingBox();
             const b = geometry.boundingBox;
             dims = { x: (b.max.x-b.min.x).toFixed(1), y: (b.max.y-b.min.y).toFixed(1), z: (b.max.z-b.min.z).toFixed(1) };
             geometry.computeBoundingSphere();
             mesh.position.set(-geometry.boundingSphere.center.x, -geometry.boundingSphere.center.y, -geometry.boundingSphere.center.z);
             scene.add(mesh);
-            camera.position.z = geometry.boundingSphere.radius * 2.5;
+            camera.position.set(0, geometry.boundingSphere.radius, geometry.boundingSphere.radius * 2.5);
             currentVol = getVol(geometry);
             calculate();
         };
@@ -126,19 +132,35 @@
     function calculate() {
         if(!currentVol) return;
         const infill = parseFloat(document.getElementById('infill').value);
-        const mode = parseFloat(document.getElementById('mode').value);
-        let weight = currentVol * 1.25 * (infill + 0.15);
-        let extra = 0, status = "一體成型", sColor = "#4ade80";
-
-        if(dims.x > 256 || dims.y > 256 || dims.z > 260) { extra = 250; status = "需拆件印製"; sColor = "#f87171"; }
+        const modeSelect = document.getElementById('mode');
+        let factor = parseFloat(modeSelect.value);
+        const modeName = modeSelect.options[modeSelect.selectedIndex].text;
         
-        let price = Math.ceil((weight * 2.5 * mode) + 35 + extra);
+        let splitFee = 0, status = "✅ 一體成型", sColor = "#4ade80";
+
+        // X2D 尺寸判定
+        if (dims.x > 256 || dims.y > 256 || dims.z > 260) {
+            splitFee = 250; status = "⚠️ 需拆件印製 (超出範圍)"; sColor = "#f87171";
+        } else if (modeName.includes("異材質") && dims.x > 235.5) {
+            status = "❌ 輔助噴頭超限 (限單色)"; sColor = "#fbbf24"; factor = 1.0;
+        }
+
+        const weight = currentVol * 1.25 * (infill + 0.18);
+        let price = Math.ceil((weight * 2.5 * factor) + 35 + splitFee);
+        
         document.getElementById('price-out').innerText = price < 60 ? 60 : price;
-        document.getElementById('weight-out').innerText = "重量: " + weight.toFixed(1) + " g";
-        document.getElementById('size-out').innerText = "尺寸: " + dims.x + "x" + dims.y + "x" + dims.z + " mm";
+        document.getElementById('weight-out').innerText = "預估重量: " + weight.toFixed(1) + " g";
+        document.getElementById('size-out').innerText = "尺寸: " + dims.x + " x " + dims.y + " x " + dims.z + " mm";
         const st = document.getElementById('status-out');
         st.innerText = status; st.style.color = sColor;
     }
+
+    window.onresize = () => {
+        const container = document.getElementById('canvas-container');
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+    };
 
     init();
 </script>
