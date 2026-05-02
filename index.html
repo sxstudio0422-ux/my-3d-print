@@ -3,121 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SX Studio - 智能 3D 代印系統</title>
+    <title>SX Studio | 專業 3D 智能估價系統</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/STLLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/controls/OrbitControls.js"></script>
     <style>
-        :root { --primary: #00d2ff; --bg: #0f172a; --card: #1e293b; }
-        body { font-family: 'PingFang TC', sans-serif; background: var(--bg); color: #f8fafc; margin: 0; overflow-x: hidden; }
-        .header { padding: 20px; text-align: center; background: linear-gradient(to bottom, #1e293b, transparent); }
-        .main-container { display: flex; flex-wrap: wrap; gap: 20px; padding: 20px; justify-content: center; }
+        :root { --primary: #00d2ff; --accent: #3a7bd5; --success: #4ade80; --warning: #fbbf24; --danger: #f87171; --bg: #0b0f1a; --card: rgba(30, 41, 59, 0.7); }
+        body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background: var(--bg); color: #e2e8f0; margin: 0; display: flex; flex-direction: column; min-height: 100vh; }
         
-        /* 3D 視窗 */
-        #canvas-container { width: 100%; max-width: 600px; height: 400px; background: radial-gradient(#334155, #0f172a); border-radius: 20px; border: 1px solid #334155; position: relative; overflow: hidden; }
-        #drop-hint { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #94a3b8; pointer-events: none; text-align: center; }
+        /* 導航欄 */
+        nav { background: rgba(15, 23, 42, 0.9); padding: 15px 50px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
+        .logo { font-size: 24px; font-weight: 800; background: linear-gradient(45deg, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-        /* 控制面板 */
-        .control-panel { width: 100%; max-width: 400px; background: var(--card); padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
-        .stat-box { background: #0f172a; padding: 10px; border-radius: 10px; text-align: center; }
-        .stat-label { font-size: 12px; color: #94a3b8; display: block; }
-        .stat-value { font-size: 18px; font-weight: bold; color: var(--primary); }
+        .container { display: grid; grid-template-columns: 1fr 400px; gap: 30px; padding: 40px; max-width: 1400px; margin: 0 auto; width: 90%; }
+        @media (max-width: 1000px) { .container { grid-template-columns: 1fr; padding: 20px; } }
 
-        select, button { width: 100%; padding: 12px; border-radius: 10px; border: none; margin-top: 10px; }
-        select { background: #334155; color: white; }
-        .price-display { font-size: 32px; color: #4ade80; font-weight: bold; margin: 20px 0; text-align: center; border-top: 1px solid #334155; padding-top: 20px; }
-        .btn-order { background: var(--primary); color: #0f172a; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-order:hover { opacity: 0.9; transform: scale(1.02); }
+        /* 左側預覽區 */
+        .preview-section { background: var(--card); border-radius: 24px; border: 1px solid rgba(255,255,255,0.1); position: relative; overflow: hidden; height: 600px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        #canvas-container { width: 100%; height: 100%; cursor: grab; }
+        #drop-hint { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #64748b; pointer-events: none; }
+        .upload-btn { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--primary); color: #0b0f1a; padding: 12px 30px; border-radius: 50px; font-weight: bold; cursor: pointer; box-shadow: 0 5px 20px rgba(0, 210, 255, 0.4); border: none; }
+
+        /* 右側面板 */
+        .control-panel { background: var(--card); padding: 30px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(20px); }
+        h2 { margin-top: 0; font-size: 20px; border-left: 4px solid var(--primary); padding-left: 15px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-size: 14px; color: #94a3b8; }
+        select { width: 100%; background: #0f172a; border: 1px solid #334155; color: white; padding: 12px; border-radius: 12px; outline: none; transition: 0.3s; }
+        select:focus { border-color: var(--primary); }
+
+        /* 數據格格 */
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 25px 0; }
+        .info-card { background: rgba(15, 23, 42, 0.5); padding: 15px; border-radius: 15px; border: 1px solid #1e293b; }
+        .info-label { font-size: 12px; color: #64748b; display: block; margin-bottom: 5px; }
+        .info-value { font-size: 16px; font-weight: bold; color: var(--primary); }
+
+        /* 價格顯示 */
+        .price-section { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #334155; }
+        .price-amount { font-size: 48px; font-weight: 800; color: var(--success); margin: 10px 0; }
+        .price-unit { font-size: 18px; color: #64748b; margin-left: 5px; }
+
+        .btn-submit { width: 100%; padding: 18px; background: linear-gradient(45deg, var(--primary), var(--accent)); color: white; border: none; border-radius: 15px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 20px; }
+        .btn-submit:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(58, 123, 213, 0.4); }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <h1>SX Studio 3D 估價系統</h1>
-    <p>上傳模型，即刻預覽</p>
-</div>
+<nav>
+    <div class="logo">SX STUDIO 3D</div>
+    <div style="font-size: 14px; color: #64748b;">X2D + AMS 智能報價系統</div>
+</nav>
 
-<div class="main-container">
-    <div id="canvas-container" onclick="document.getElementById('fileInput').click()">
+<div class="container">
+    <div class="preview-section">
+        <div id="canvas-container"></div>
         <div id="drop-hint">
-            <div style="font-size: 50px;">📦</div>
-            點擊或拖入 STL 檔案
+            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+            <p>請上傳您的 STL 圖檔</p>
         </div>
+        <button class="upload-btn" onclick="document.getElementById('fileInput').click()">選擇檔案</button>
         <input type="file" id="fileInput" hidden accept=".stl">
     </div>
 
     <div class="control-panel">
-        <h3>列印參數設定</h3>
+        <h2>列印參數設定</h2>
         
-        <label>填充率 (Infill)</label>
-        <select id="infill" onchange="calculate()">
-            <option value="0.1">10% - 輕量結構</option>
-            <option value="0.2" selected>20% - 標準強度</option>
-            <option value="0.5">50% - 高強度件</option>
-            <option value="1.0">100% - 全實心</option>
-        </select>
-
-        <div class="stat-grid">
-            <div class="stat-box"><span class="stat-label">預估重量</span><span class="stat-value" id="weight-out">0</span><small>g</small></div>
-            <div class="stat-box"><span class="stat-label">難度加權</span><span class="stat-value" id="diff-out">1.0</span></div>
+        <div class="form-group" style="margin-top: 25px;">
+            <label>填充密度 (Infill)</label>
+            <select id="infill" onchange="calculate()">
+                <option value="0.1">10% (輕量/展示)</option>
+                <option value="0.2" selected>20% (結構標準)</option>
+                <option value="0.5">50% (高強度)</option>
+                <option value="1.0">100% (實心)</option>
+            </select>
         </div>
 
-        <div class="price-display">NT$ <span id="price-out">0</span></div>
-        
-        <button class="btn-order" onclick="window.open('你的Line連結')">確認訂單 / 聯絡店長</button>
-        <p style="font-size: 12px; color: #64748b; text-align: center; margin-top: 10px;">* 最終報價以店長人工審核為準</p>
+        <div class="form-group">
+            <label>列印模式 (X2D 專屬)</label>
+            <select id="nozzle-mode" onchange="calculate()">
+                <option value="1.0" selected>單色模式 (主噴頭)</option>
+                <option value="1.8">AMS 多色模式 (主噴頭)</option>
+                <option value="2.2">異材質支撐 (雙噴頭模式)</option>
+            </select>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-card" style="grid-column: span 2;">
+                <span class="info-label">模型尺寸 (L x W x H)</span>
+                <span class="info-value" id="size-out">-- x -- x -- mm</span>
+            </div>
+            <div class="info-card">
+                <span class="info-label">預估重量</span>
+                <span class="info-value" id="weight-out">0</span> <small>g</small>
+            </div>
+            <div class="info-card">
+                <span class="info-label">機台判定</span>
+                <span class="info-value" id="diff-out" style="font-size: 13px;">等待檔案</span>
+            </div>
+        </div>
+
+        <div class="price-section">
+            <span style="color: #94a3b8;">預估費用</span>
+            <div class="price-amount"><small style="font-size: 20px;">NT$</small> <span id="price-out">0</span></div>
+            <button class="btn-submit" onclick="window.open('https://line.me/ti/p/1789987')">立即下單 / 諮詢店長</button>
+            <p style="font-size: 11px; color: #475569; margin-top: 15px;">* 價格包含 PLA 耗材費、電力補償及基本處置費。<br>最終報價依切片軟體實際計算為準。</p>
+        </div>
     </div>
 </div>
 
 <script>
-    let scene, camera, renderer, mesh, controls;
-    let currentVol = 0;
+    let scene, camera, renderer, mesh, controls, currentVol = 0;
+    let dimensions = { x: 0, y: 0, z: 0 };
 
-    // 初始化 3D 視窗
     function initThree() {
         scene = new THREE.Scene();
-        camera = new THREE.PerspectiveCamera(45, 600/400, 0.1, 1000);
-        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(document.getElementById('canvas-container').clientWidth, 400);
-        document.getElementById('canvas-container').appendChild(renderer.domElement);
+        const container = document.getElementById('canvas-container');
+        camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 2000);
         
-        const light = new THREE.DirectionalLight(0xffffff, 1);
-        light.position.set(1, 1, 1);
-        scene.add(light);
-        scene.add(new THREE.AmbientLight(0x404040));
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+        
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+        const spotLight = new THREE.SpotLight(0xffffff, 0.8);
+        spotLight.position.set(200, 400, 300);
+        scene.add(spotLight);
         
         controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
         animate();
     }
 
     function animate() {
         requestAnimationFrame(animate);
-        if(mesh) mesh.rotation.y += 0.005;
+        controls.update();
+        if(mesh) mesh.rotation.y += 0.002;
         renderer.render(scene, camera);
     }
 
     document.getElementById('fileInput').onchange = (e) => {
         const file = e.target.files[0];
+        if(!file) return;
         const reader = new FileReader();
+        document.getElementById('drop-hint').innerHTML = "<p>正在解析 3D 模型...</p>";
+        
         reader.onload = (event) => {
             const loader = new THREE.STLLoader();
             const geometry = loader.parse(event.target.result);
             
             if(mesh) scene.remove(mesh);
-            const material = new THREE.MeshPhongMaterial({ color: 0x00d2ff, specular: 0x111111, shininess: 200 });
+            const material = new THREE.MeshStandardMaterial({ color: 0x00d2ff, metalness: 0.5, roughness: 0.2 });
             mesh = new THREE.Mesh(geometry, material);
             
-            // 自動調整模型大小與位置
+            geometry.computeBoundingBox();
+            const bbox = geometry.boundingBox;
+            dimensions.x = (bbox.max.x - bbox.min.x).toFixed(1);
+            dimensions.y = (bbox.max.y - bbox.min.y).toFixed(1);
+            dimensions.z = (bbox.max.z - bbox.min.z).toFixed(1);
+
             geometry.computeBoundingSphere();
             const center = geometry.boundingSphere.center;
             mesh.position.set(-center.x, -center.y, -center.z);
             scene.add(mesh);
             
-            camera.position.z = geometry.boundingSphere.radius * 2.5;
+            camera.position.set(0, geometry.boundingSphere.radius, geometry.boundingSphere.radius * 2);
             document.getElementById('drop-hint').style.display = 'none';
-
-            // 計算體積
             currentVol = getVolume(geometry) / 1000;
             calculate();
         };
@@ -131,27 +183,3 @@
             const v1 = new THREE.Vector3(pos.getX(i), pos.getY(i), pos.getZ(i));
             const v2 = new THREE.Vector3(pos.getX(i+1), pos.getY(i+1), pos.getZ(i+1));
             const v3 = new THREE.Vector3(pos.getX(i+2), pos.getY(i+2), pos.getZ(i+2));
-            vol += v1.dot(v2.cross(v3)) / 6;
-        }
-        return Math.abs(vol);
-    }
-
-    function calculate() {
-        if(currentVol === 0) return;
-        const infill = parseFloat(document.getElementById('infill').value);
-        
-        // 你的定價邏輯 (可隨時修改)
-        const weight = currentVol * 1.25 * (infill + 0.1); 
-        const pricePerGram = 2.5; // 調低單價讓價格親民
-        const baseFee = 30;       // 調低基本費
-        
-        const total = Math.ceil(weight * pricePerGram + baseFee);
-        
-        document.getElementById('weight-out').innerText = weight.toFixed(1);
-        document.getElementById('price-out').innerText = total < 50 ? 50 : total; // 最低消費 50 元
-    }
-
-    initThree();
-</script>
-</body>
-</html>
