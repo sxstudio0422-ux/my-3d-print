@@ -1,71 +1,100 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
-    <title>AI 3D 列印自動估價系統</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 3D Print - 智能代印估價</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/STLLoader.js"></script>
     <style>
-        body { font-family: sans-serif; text-align: center; background: #f4f4f4; }
-        #drop-zone { border: 2px dashed #bbb; padding: 40px; width: 300px; margin: 20px auto; background: #fff; cursor: pointer; }
-        #viewer { width: 400px; height: 300px; margin: 0 auto; background: #eee; border: 1px solid #ccc; }
-        .result { font-size: 1.2em; color: #333; margin-top: 20px; }
-        button { padding: 10px 20px; background: #28a745; color: white; border: none; cursor: pointer; margin-top: 10px; }
+        :root { --primary: #00d2ff; --secondary: #3a7bd5; --dark: #1a1a2e; }
+        body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--dark); color: white; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        .container { background: rgba(255,255,255,0.05); padding: 30px; border-radius: 20px; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); width: 90%; max-width: 500px; margin-top: 50px; text-align: center; }
+        #drop-zone { border: 2px dashed var(--primary); padding: 30px; border-radius: 15px; cursor: pointer; transition: 0.3s; margin-bottom: 20px; }
+        #drop-zone:hover { background: rgba(0, 210, 255, 0.1); }
+        #viewer { width: 100%; height: 250px; background: #000; border-radius: 10px; margin: 20px 0; display: none; }
+        .price-tag { font-size: 2.5em; font-weight: bold; color: var(--primary); margin: 10px 0; }
+        .details { text-align: left; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; font-size: 0.9em; margin-bottom: 20px; }
+        button { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; margin: 5px 0; transition: 0.3s; }
+        .btn-primary { background: linear-gradient(45deg, var(--primary), var(--secondary)); color: white; font-size: 1.1em; }
+        .btn-outline { background: transparent; border: 1px solid #666; color: #aaa; font-size: 0.9em; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 210, 255, 0.4); }
     </style>
 </head>
 <body>
 
-    <h1>3D 列印即時報價</h1>
-    <div id="drop-zone">點擊或拖拽 STL 檔案至此</div>
-    <div id="viewer"></div>
-    
-    <div class="result">
-        <p>預估體積: <span id="volume">0</span> cm³</p>
-        <p>預估價格: <span id="price">0</span> TWD</p>
+    <div class="container">
+        <h2>🛠️ AI 智能代印估價</h2>
+        <p style="color: #888;">上傳 STL 檔案，3秒取得報價</p>
+        
+        <div id="drop-zone" onclick="document.getElementById('fileInput').click()">
+            <span id="drop-text">點擊或拖入 3D 檔案 (.stl)</span>
+            <input type="file" id="fileInput" hidden accept=".stl">
+        </div>
+
+        <div id="viewer"></div>
+
+        <div id="result-area" style="display: none;">
+            <div class="details">
+                模型體積：<span id="vol-val">0</span> cm³<br>
+                估算重量：<span id="weight-val">0</span> g (PLA)<br>
+                AI 難度判定：<span id="diff-val">標準</span>
+            </div>
+            <div class="price-tag">NT$ <span id="price-val">0</span></div>
+            <button class="btn-primary" onclick="confirmOrder()">確認報價並下單</button>
+            <button class="btn-outline" onclick="contactOwner()">對報價有疑慮？聯絡我</button>
+        </div>
     </div>
 
-    <button onclick="contactOwner()">對報價有疑慮？聯絡我</button>
-    <button onclick="submitOrder()" style="background: #007bff;">確認代印（發送檔案）</button>
-
     <script>
-        let currentVolume = 0;
         const loader = new THREE.STLLoader();
-        const pricePerCm3 = 15; // 假設每立方公分 15 元，你可以自己改
+        const pricePerGram = 5; // 每克 5 元 (你可以自行修改)
+        const baseFee = 100;     // 基本起印費
 
-        document.getElementById('drop-zone').onclick = () => {
-            let input = document.createElement('input');
-            input.type = 'file';
-            input.onchange = e => { handleFile(e.target.files[0]); };
-            input.click();
+        document.getElementById('fileInput').onchange = e => {
+            const file = e.target.files[0];
+            if (file) handleFile(file);
         };
 
         function handleFile(file) {
+            document.getElementById('drop-text').innerText = "解析中...";
             const reader = new FileReader();
             reader.onload = function (e) {
-                const contents = e.target.result;
-                const geometry = loader.parse(contents);
+                const geometry = loader.parse(e.target.result);
+                const volume = calculateVolume(geometry) / 1000; // cm3
+                const weight = volume * 1.25; // PLA 密度約 1.25
                 
-                // 計算體積 (簡易版公式)
-                currentVolume = calculateVolume(geometry) / 1000; // 換算成 cm³
-                const price = Math.ceil(currentVolume * pricePerCm3 + 50); // +50 是基本費
+                // AI 簡易邏輯：如果體積太小但面數很多，判定為「精密件」加價
+                let factor = 1.0;
+                let difficulty = "標準";
+                if (geometry.attributes.position.count > 100000 && volume < 10) {
+                    factor = 1.5;
+                    difficulty = "高難度精密件";
+                }
+
+                const finalPrice = Math.ceil(weight * pricePerGram * factor + baseFee);
+
+                // 更新介面
+                document.getElementById('vol-val').innerText = volume.toFixed(2);
+                document.getElementById('weight-val').innerText = weight.toFixed(2);
+                document.getElementById('diff-val').innerText = difficulty;
+                document.getElementById('price-val').innerText = finalPrice;
                 
-                document.getElementById('volume').innerText = currentVolume.toFixed(2);
-                document.getElementById('price').innerText = price;
-                
-                // 渲染 3D 預覽 (此處省略複雜渲染代碼，僅供邏輯示範)
-                alert("檔案解析成功！預估價格為: " + price + " 元");
+                document.getElementById('result-area').style.display = 'block';
+                document.getElementById('drop-text').innerText = "更換檔案";
+                // 這裡可加入 Three.js 渲染器代碼
             };
             reader.readAsArrayBuffer(file);
         }
 
         function calculateVolume(geometry) {
             let volume = 0;
-            const position = geometry.attributes.position;
-            const faces = position.count / 3;
-            for (let i = 0; i < faces; i++) {
-                const v1 = new THREE.Vector3().fromBufferAttribute(position, i * 3 + 0);
-                const v2 = new THREE.Vector3().fromBufferAttribute(position, i * 3 + 1);
-                const v3 = new THREE.Vector3().fromBufferAttribute(position, i * 3 + 2);
-                volume += (v1.x * v2.y * v3.z + v1.y * v2.z * v3.x + v1.z * v2.x * v3.y - v1.x * v2.z * v3.y - v1.y * v2.x * v3.z - v1.z * v2.y * v3.x) / 6;
+            const pos = geometry.attributes.position;
+            for (let i = 0; i < pos.count; i += 3) {
+                const v1 = new THREE.Vector3(pos.getX(i), pos.getY(i), pos.getZ(i));
+                const v2 = new THREE.Vector3(pos.getX(i+1), pos.getY(i+1), pos.getZ(i+1));
+                const v3 = new THREE.Vector3(pos.getX(i+2), pos.getY(i+2), pos.getZ(i+2));
+                volume += v1.dot(v2.cross(v3)) / 6;
             }
             return Math.abs(volume);
         }
@@ -74,8 +103,9 @@
             window.open("https://line.me/ti/p/你的ID", "_blank");
         }
 
-        function submitOrder() {
-            alert("功能開發中：這將會把檔案上傳至你的雲端並通知你！");
+        function confirmOrder() {
+            alert("已記錄您的需求！請在接下來的頁面填寫收件資訊並上傳檔案。");
+            window.location.href = "你的Google表單連結";
         }
     </script>
 </body>
